@@ -20,7 +20,7 @@ import six.moves.urllib.parse as parser
 
 from osprofiler.drivers import base
 from osprofiler import exc
-
+import json
 
 class Redis(base.Driver):
     def __init__(self, connection_str, db=0, project=None,
@@ -92,6 +92,7 @@ class Redis(base.Driver):
 
         :param base_id: Base id of trace elements.
         """
+        r = []
         for key in self.db.scan_iter(match=self.namespace + base_id + "*"):
             data = self.db.get(key)
             n = jsonutils.loads(data)
@@ -102,9 +103,11 @@ class Redis(base.Driver):
             service = n["service"]
             host = n["info"]["host"]
             timestamp = n["timestamp"]
-
+            r.append(n)
             self._append_results(trace_id, parent_id, name, project, service,
                                  host, timestamp, n)
+        with open("~/result-raw.json", "w") as file:
+            json.dump(r, file, indent=4)
 
         return self._parse_results()
 
